@@ -1,0 +1,136 @@
+/**
+ * Tool handling for GLM
+ * Compatible with Claude Code tool format
+ */
+
+import type { ToolCall, ToolResult } from './types'
+
+/**
+ * Tool definition
+ */
+export type Tool = {
+  name: string
+  description?: string
+  inputSchema: Record<string, unknown>
+}
+
+/**
+ * Convert tools to Anthropic-compatible format
+ * The GLM Anthropic-compatible API expects:
+ * {
+ *   "name": "tool_name",
+ *   "description": "...",
+ *   "input_schema": {...}
+ * }
+ */
+export function convertToolsToGLM(tools: Tool[]): Array<{
+  name: string
+  description?: string
+  input_schema: Record<string, unknown>
+}> {
+  return tools.map((tool) => ({
+    name: tool.name,
+    description: tool.description,
+    input_schema: tool.inputSchema,
+  }))
+}
+
+/**
+ * Extract tool calls from GLM response and convert them
+ */
+export function extractToolCalls(
+  glmToolCalls: Array<{
+    id: string
+    type: string
+    function: {
+      name: string
+      arguments: string
+    }
+  } | null | undefined>,
+): ToolCall[] {
+  if (!glmToolCalls) return []
+
+  return glmToolCalls
+    .filter((tc): tc is { id: string; type: string; function: { name: string; arguments: string } } => tc != null)
+    .map((tc) => {
+      let args: Record<string, unknown> = {}
+      try {
+        args = JSON.parse(tc.function.arguments)
+      } catch {
+        // If parsing fails, keep empty object
+      }
+
+      return {
+        name: tc.function.name,
+        input: args,
+      }
+    })
+}
+
+/**
+ * Format tool results to send back to GLM
+ */
+export function formatToolResults(results: ToolResult[]): Array<{ role: string; content: string }> {
+  return results.map((result) => {
+    const content = result.isError
+      ? `Error: ${result.content}`
+      : result.content
+
+    return {
+      role: 'tool',
+      content,
+    }
+  })
+}
+
+/**
+ * Standard available tools (Bash, gh, etc.)
+ */
+export const STANDARD_TOOLS: Tool[] = [
+  {
+    name: 'Bash',
+    description: 'Execute a Bash command in a terminal',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        command: {
+          type: 'string',
+          description: 'The command to execute',
+        },
+      },
+      required: ['command'],
+    },
+  },
+  {
+    name: 'read_file',
+    description: 'Read the contents of a file',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        file_path: {
+          type: 'string',
+          description: 'The path to the file to read',
+        },
+      },
+      required: ['file_path'],
+    },
+  },
+  {
+    name: 'write_file',
+    description: 'Write content to a file',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        file_path: {
+          type: 'string',
+          description: 'The path to the file to write',
+        },
+        content: {
+          type: 'string',
+          description: 'The content to write',
+        },
+      },
+      required: ['file_path', 'content'],
+    },
+  },
+]

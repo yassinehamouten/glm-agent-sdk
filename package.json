@@ -1,0 +1,40 @@
+{
+  "name": "@yassinehamouten/glm-agent-sdk",
+  "version": "1.0.0",
+  "description": "GLM Agent SDK - Build AI agents with GLM API (Zhipu AI / BigModel)",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "bun test",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "glm",
+    "zhipu",
+    "bigmodel",
+    "ai",
+    "agent",
+    "sdk",
+    "tool-use",
+    "llm"
+  ],
+  "author": "Yassine Hamouten",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.8.3"
+  }
+}
